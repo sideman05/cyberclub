@@ -98,23 +98,6 @@ export default function BlogPost() {
     window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${share}`, '_blank');
   }
 
-  function shareToInstagramFallback() {
-    // Instagram doesn't support direct link sharing to feed from web. Copy link as fallback.
-    navigator.clipboard?.writeText(url).then(() => {
-      alert('Post link copied to clipboard — open Instagram and paste in your story or DM.');
-    }).catch(() => {
-      prompt('Copy this link to share on Instagram:', url);
-    });
-  }
-
-  function copyLink() {
-    navigator.clipboard?.writeText(url).then(() => {
-      alert('Link copied to clipboard');
-    }).catch(() => {
-      prompt('Copy this link:', url);
-    });
-  }
-
   function submitComment(event) {
     event.preventDefault();
     const cKey = getCommentsKey(id);
@@ -141,10 +124,6 @@ export default function BlogPost() {
                 <button type="button" className="blog-back-link" onClick={() => navigate('/blog')}>
                   ← Back to Blog
                 </button>
-                <div className="blog-article-stats">
-                  <span>{post.readTime}</span>
-                  <span>{views} views</span>
-                </div>
               </div>
 
               <div className="blog-article-meta">
@@ -155,13 +134,6 @@ export default function BlogPost() {
                     <strong>{post.author}</strong>
                     <small>{post.date}</small>
                   </div>
-                </div>
-                <div className="blog-share">
-                  <button type="button" className="blog-share-btn" onClick={shareToWhatsApp}>WhatsApp</button>
-                  <button type="button" className="blog-share-btn" onClick={shareToX}>X</button>
-                  <button type="button" className="blog-share-btn" onClick={shareToLinkedIn}>LinkedIn</button>
-                  <button type="button" className="blog-share-btn" onClick={shareToInstagramFallback}>Instagram</button>
-                  <button type="button" className="blog-share-btn blog-share-btn-alt" onClick={copyLink}>Copy Link</button>
                 </div>
               </div>
 
@@ -202,7 +174,6 @@ export default function BlogPost() {
                 <form onSubmit={submitComment} className="comment-form">
                   <div className="comment-form-row">
                     <input placeholder="Your name (optional)" value={name} onChange={(e) => setName(e.target.value)} />
-                    <input value={url} readOnly aria-label="Article link" />
                   </div>
                   <textarea placeholder="Write a comment" value={commentText} onChange={(e) => setCommentText(e.target.value)} required />
                   <div className="comment-form-actions">
