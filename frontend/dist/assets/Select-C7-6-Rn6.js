@@ -1,0 +1,1 @@
+import{t as e}from"./react-vendor-CEFZOMne.js";var t=e();function n({label:e,error:n,children:r,className:i=``,...a}){return(0,t.jsxs)(`label`,{className:`admin-field ${i}`,children:[(0,t.jsx)(`span`,{children:e}),(0,t.jsx)(`select`,{className:n?`has-error`:``,...a,children:r}),n&&(0,t.jsx)(`small`,{children:n})]})}export{n as t};

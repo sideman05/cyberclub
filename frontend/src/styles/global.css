@@ -5501,10 +5501,15 @@ h3 {
   transform: scale(0.97);
 }
 
-.leaders-page--static .animate-on-scroll {
+.leaders-page--static .animate-on-scroll,
+.leaders-page--static .animate-on-scroll:not(.in-view),
+.leaders-page--static .animate-on-scroll.fade-in:not(.in-view),
+.leaders-page--static .animate-on-scroll.fade-left:not(.in-view),
+.leaders-page--static .animate-on-scroll.fade-right:not(.in-view),
+.leaders-page--static .animate-on-scroll.scale-up:not(.in-view) {
   opacity: 1 !important;
   transform: none !important;
-  will-change: auto;
+  will-change: auto !important;
 }
 
 body::before {

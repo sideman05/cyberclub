@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { Github, Linkedin } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 
 function LeaderCard({ fullName, position, bio, image, imageAlt, linkedinUrl, githubUrl, onPreview, delay = 0 }) {
   return (
@@ -23,12 +23,12 @@ function LeaderCard({ fullName, position, bio, image, imageAlt, linkedinUrl, git
         <div className="leader-socials" aria-label={`${fullName} social links`}>
           {linkedinUrl && (
             <a href={linkedinUrl} target="_blank" rel="noreferrer" aria-label="LinkedIn">
-              <Linkedin size={18} />
+              <ExternalLink size={18} />
             </a>
           )}
           {githubUrl && (
             <a href={githubUrl} target="_blank" rel="noreferrer" aria-label="GitHub">
-              <Github size={18} />
+              <ExternalLink size={18} />
             </a>
           )}
         </div>

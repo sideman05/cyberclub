@@ -1,1 +1,0 @@
-import{t as e}from"./react-vendor-gs7kcfBk.js";var t=e();function n({label:e=`Loading data...`}){return(0,t.jsxs)(`div`,{className:`admin-state`,children:[(0,t.jsx)(`span`,{className:`admin-spinner`,"aria-hidden":`true`}),(0,t.jsx)(`p`,{children:e})]})}export{n as t};
