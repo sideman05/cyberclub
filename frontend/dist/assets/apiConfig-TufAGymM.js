@@ -1,0 +1,1 @@
+var e=`http://38.247.148.233/api/index.php`.replace(/\/$/,``),t=e.replace(/\/index\.php$/i,``);function n(e){return e?/^(data:|blob:|https?:\/\/)/i.test(e)?e:`${t}/${String(e).replace(/^\/+/,``)}`:``}export{n,e as t};

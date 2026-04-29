@@ -1,0 +1,1 @@
+import{i as e}from"./api-D8BjtBvs.js";var t={all(){return e(`/admin/contacts`)},find(t){return e(`/admin/contacts/${t}`)},updateStatus(t,n){return e(`/admin/contacts/${t}/status`,{method:`PUT`,body:{status:n}})},remove(t){return e(`/admin/contacts/${t}`,{method:`DELETE`})}};export{t};

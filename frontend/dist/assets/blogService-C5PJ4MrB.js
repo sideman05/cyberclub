@@ -1,0 +1,1 @@
+import{i as e,r as t}from"./api-D8BjtBvs.js";var n={all(){return e(`/admin/blogs`)},find(t){return e(`/admin/blogs/${t}`)},create(e){return t(`/admin/blogs`,e)},update(e,n){return t(`/admin/blogs/${e}`,n,`PUT`)},remove(t){return e(`/admin/blogs/${t}`,{method:`DELETE`})}};export{n as t};

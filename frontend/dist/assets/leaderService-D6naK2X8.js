@@ -1,1 +1,0 @@
-import{i as e,r as t}from"./api-C8kFfQln.js";var n={all(){return e(`/admin/leaders`)},find(t){return e(`/admin/leaders/${t}`)},create(e){return t(`/admin/leaders`,e)},update(e,n){return t(`/admin/leaders/${e}`,n,`PUT`)},remove(t){return e(`/admin/leaders/${t}`,{method:`DELETE`})}};export{n as t};

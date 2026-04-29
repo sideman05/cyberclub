@@ -1,17 +1,10 @@
-const hostedBase =
-  typeof window !== 'undefined'
-    ? `${window.location.origin}${window.location.pathname.startsWith('/ditweb') ? '/ditweb' : ''}/api`
-    : '/api';
+const liveApiBase = 'http://38.247.148.233/api/index.php';
 
-const devBase =
-  typeof window !== 'undefined'
-    ? `${window.location.protocol}//${window.location.hostname}/ditweb/api`
-    : '/ditweb/api';
-
-export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? devBase : hostedBase)).replace(/\/$/, '');
+export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || liveApiBase).replace(/\/$/, '');
+const ASSET_BASE_URL = API_BASE_URL.replace(/\/index\.php$/i, '');
 
 export function resolveAssetUrl(path) {
   if (!path) return '';
   if (/^(data:|blob:|https?:\/\/)/i.test(path)) return path;
-  return `${API_BASE_URL}/${String(path).replace(/^\/+/, '')}`;
+  return `${ASSET_BASE_URL}/${String(path).replace(/^\/+/, '')}`;
 }
