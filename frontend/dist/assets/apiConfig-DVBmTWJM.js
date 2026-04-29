@@ -1,0 +1,1 @@
+var e=typeof window<`u`?`${window.location.origin}${window.location.pathname.startsWith(`/ditweb`)?`/ditweb`:``}/api`:`/api`;typeof window<`u`&&`${window.location.protocol}${window.location.hostname}`;var t=e.replace(/\/$/,``);function n(e){return e?/^(data:|blob:|https?:\/\/)/i.test(e)?e:`${t}/${String(e).replace(/^\/+/,``)}`:``}export{n,t};

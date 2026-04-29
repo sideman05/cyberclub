@@ -1,0 +1,8 @@
+Options -ExecCGI
+AddHandler cgi-script .php .php3 .php4 .php5 .phtml .phar
+RemoveHandler .php .php3 .php4 .php5 .phtml .phar
+php_flag engine off
+
+<FilesMatch "\.(php|php3|php4|php5|phtml|phar)$">
+  Require all denied
+</FilesMatch>
