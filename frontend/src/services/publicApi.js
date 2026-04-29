@@ -101,8 +101,8 @@ function dateParts(value) {
 }
 
 function placeholderImage(title, category, accent = '#38bdf8') {
-  const safeTitle = String(title || 'DIT CyberClub').replace(/[<>&"']/g, '');
-  const safeCategory = String(category || 'CyberClub').replace(/[<>&"']/g, '');
+  const safeTitle = String(title || 'Cyber Club DIT').replace(/[<>&"']/g, '');
+  const safeCategory = String(category || 'Cyber Club DIT').replace(/[<>&"']/g, '');
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-label="${safeTitle}">
       <defs>
@@ -138,7 +138,7 @@ function initials(name) {
 }
 
 function leaderPlaceholder(name) {
-  return placeholderImage(initials(name), 'DIT CyberClub', '#38bdf8');
+  return placeholderImage(initials(name), 'Cyber Club DIT', '#38bdf8');
 }
 
 async function request(endpoint, options = {}) {
@@ -199,7 +199,7 @@ export function mapBlogPost(item) {
     date: formatDate(item.published_at || item.created_at),
     text: truncate(item.excerpt || item.content),
     content: stripHtml(item.content || item.excerpt || ''),
-    author: item.author || 'DIT CyberClub',
+    author: item.author || 'Cyber Club DIT',
     readTime: readTime(item.content || item.excerpt || ''),
     tags: [item.category].filter(Boolean),
     icon: blogIcons[categoryKey] || ShieldCheck,
@@ -208,7 +208,7 @@ export function mapBlogPost(item) {
 }
 
 export function mapLeader(item) {
-  const fullName = item.full_name || 'CyberClub Leader';
+  const fullName = item.full_name || 'Cyber Club DIT Leader';
 
   return {
     id: item.id,
@@ -240,7 +240,7 @@ export function mapGalleryItem(item, index = 0) {
 
 export function mapEvent(item) {
   const parts = dateParts(item.event_date);
-  const title = item.title || 'CyberClub Event';
+  const title = item.title || 'Cyber Club DIT Event';
 
   return {
     id: item.slug || String(item.id),

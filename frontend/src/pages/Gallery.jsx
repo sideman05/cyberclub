@@ -56,7 +56,7 @@ export default function Gallery() {
     <>
       <PageHero
         badge="Club Moments"
-        title="CyberClub Gallery"
+        title="Cyber Club DIT Gallery"
         text="A visual look at our workshops, trainings, competitions, tech talks, and community events."
       />
 

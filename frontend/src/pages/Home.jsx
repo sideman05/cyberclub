@@ -240,7 +240,7 @@ export default function Home() {
                 <h3>Events are being scheduled</h3>
                 <p>Check back soon or contact the club to learn about upcoming sessions.</p>
                 <Link className="button button-primary" to="/contact">
-                  <span>Contact CyberClub</span>
+                  <span>Contact Cyber Club DIT</span>
                   <ArrowRight size={18} strokeWidth={2.5} />
                 </Link>
               </>
@@ -257,7 +257,7 @@ export default function Home() {
             center
             eyebrow="What We Do"
             title="Building practical security skills"
-            text="From awareness sessions to technical labs, DIT CyberClub creates a space where students learn by doing."
+            text="From awareness sessions to technical labs, Cyber Club DIT creates a space where students learn by doing."
           />
           <div className="services-grid">
             {services.slice(0, 3).map((service) => <ServiceCard key={service.title} {...service} />)}

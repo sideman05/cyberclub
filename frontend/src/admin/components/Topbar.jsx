@@ -34,7 +34,7 @@ export default function Topbar({ onMenuClick }) {
         <Menu size={20} />
       </button>
       <div>
-        <span className="admin-kicker">DIT CyberClub</span>
+        <span className="admin-kicker">Cyber Club DIT</span>
         <h1>{pageTitle(location.pathname)}</h1>
       </div>
       <div className="admin-profile">

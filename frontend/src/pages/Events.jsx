@@ -33,7 +33,7 @@ export default function Events() {
       <PageHero
         badge="Upcoming Events"
         title="Learn, Compete, and Connect"
-        text="Join upcoming workshops, bootcamps, CTF competitions, and digital safety programs organized by DIT CyberClub."
+        text="Join upcoming workshops, bootcamps, CTF competitions, and digital safety programs organized by Cyber Club DIT."
       />
 
       <section className="section">

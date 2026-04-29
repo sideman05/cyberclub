@@ -10,7 +10,7 @@ export default function Contact() {
     <>
       <PageHero
         badge="Get In Touch"
-        title="Contact DIT CyberClub"
+        title="Contact Cyber Club DIT"
         text="Reach out to join the club, collaborate on cybersecurity programs, or ask questions about our upcoming activities."
       />
 

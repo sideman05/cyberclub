@@ -276,7 +276,7 @@ export const blogPosts = [
     category: 'Awareness',
     date: 'Apr 12, 2026',
     text: 'Learn how social engineering tricks users and how to identify suspicious links, messages, and login pages.',
-    author: 'CyberClub Research Team',
+    author: 'Cyber Club DIT Research Team',
     readTime: '6 min read',
     tags: ['Phishing', 'Social Engineering', 'Awareness'],
     content:
@@ -497,7 +497,7 @@ export const terminalLines = [
   '> scanning network...',
   '> vulnerabilities found: 0',
   '> system secured',
-  '> DIT CyberClub active',
+  '> Cyber Club DIT active',
   '> building secure future...',
 ];
 

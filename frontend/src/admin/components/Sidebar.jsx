@@ -25,7 +25,7 @@ export default function Sidebar({ open, onClose }) {
         <div className="admin-brand">
           <span className="admin-brand-mark">DIT</span>
           <div>
-            <strong>CyberClub</strong>
+            <strong>Cyber Club DIT</strong>
             <small>Admin Console</small>
           </div>
         </div>

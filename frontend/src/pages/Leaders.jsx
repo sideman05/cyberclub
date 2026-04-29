@@ -12,11 +12,11 @@ import { ShieldCheck, UsersRound } from 'lucide-react';
 function toLeaderCard(item, index) {
   return {
     id: item.id || item.fullName || `leader-${index}`,
-    fullName: item.fullName || item.full_name || 'CyberClub Leader',
+    fullName: item.fullName || item.full_name || 'Cyber Club DIT Leader',
     position: item.position || 'Leader',
     bio: item.bio || '',
     image: item.image || item.image_path || '',
-    imageAlt: item.imageAlt || `${item.fullName || item.full_name || 'CyberClub Leader'} portrait`,
+    imageAlt: item.imageAlt || `${item.fullName || item.full_name || 'Cyber Club DIT Leader'} portrait`,
     linkedinUrl: item.linkedinUrl || item.linkedin_url,
     githubUrl: item.githubUrl || item.twitter_url || item.github_url,
   };
@@ -88,7 +88,7 @@ export default function Leaders() {
     <div className="leaders-page leaders-page--static">
       <PageHero
         badge="Meet Our Team"
-        title="CyberClub Leaders"
+        title="Cyber Club DIT Leaders"
         text="Meet the dedicated leaders driving cybersecurity awareness, innovation, and student growth at DIT."
       />
 
@@ -128,7 +128,7 @@ export default function Leaders() {
             <ShieldCheck size={42} />
             <UsersRound size={42} />
           </div>
-          <Button to="/contact">Join CyberClub</Button>
+          <Button to="/contact">Join Cyber Club DIT</Button>
         </div>
       </section>
 

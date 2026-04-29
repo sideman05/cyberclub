@@ -24,10 +24,10 @@ export default function Navbar() {
       <div className="container nav-shell">
         <Link className="brand-mark" to="/" onClick={closeMenu}>
           <span className="brand-logo-wrap">
-            <img src={logo} alt="DIT CyberClub logo" width="62" height="62" decoding="async" fetchPriority="high" />
+            <img src={logo} alt="Cyber Club DIT logo" width="62" height="62" decoding="async" fetchPriority="high" />
           </span>
           <span className="brand-copy">
-            <strong>DIT <span>CyberClub</span></strong>
+            <strong>Cyber Club <span>DIT</span></strong>
             <small>Dar es Salaam Institute of Technology</small>
           </span>
         </Link>

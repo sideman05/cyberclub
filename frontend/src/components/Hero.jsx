@@ -28,10 +28,10 @@ export default function Hero() {
             and real-world digital innovation.
           </p>
           <div className="hero-actions">
-            <Button to="/contact">Join CyberClub</Button>
+            <Button to="/contact">Join Cyber Club DIT</Button>
             <Button to="/events" variant="secondary">Explore Events</Button>
           </div>
-          <div className="hero-signal-row" aria-label="CyberClub focus areas">
+          <div className="hero-signal-row" aria-label="Cyber Club DIT focus areas">
             {signalTags.map(({ label, icon: Icon }) => (
               <span key={label}>
                 <Icon size={15} strokeWidth={2.4} />

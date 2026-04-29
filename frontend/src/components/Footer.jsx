@@ -13,10 +13,10 @@ export default function Footer() {
         <div className="footer-brand">
           <Link className="brand-mark" to="/">
             <span className="brand-logo-wrap">
-              <img src={logo} alt="DIT CyberClub logo" width="62" height="62" loading="lazy" decoding="async" />
+              <img src={logo} alt="Cyber Club DIT logo" width="62" height="62" loading="lazy" decoding="async" />
             </span>
             <span className="brand-copy">
-              <strong>DIT <span>CyberClub</span></strong>
+              <strong>Cyber Club <span>DIT</span></strong>
               <small>Dar es Salaam Institute of Technology</small>
             </span>
           </Link>
@@ -47,7 +47,7 @@ export default function Footer() {
         </div>
       </div>
       <div className="container footer-bottom">
-        <span>(c) 2026 DIT CyberClub. All rights reserved.</span>
+        <span>(c) 2026 Cyber Club DIT. All rights reserved.</span>
         <span>Secure. Learn. Build. Lead.</span>
       </div>
     </footer>

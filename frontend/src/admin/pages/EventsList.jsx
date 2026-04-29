@@ -129,7 +129,7 @@ export default function EventsList() {
       <div className="admin-event-hero admin-panel">
         <div className="admin-event-hero-copy">
           <span className="admin-kicker">Event Control Center</span>
-          <h2>Manage CyberClub events</h2>
+          <h2>Manage Cyber Club DIT events</h2>
           <p>
             Create, schedule, and monitor workshops, bootcamps, competitions, and registration forms from one focused workspace.
           </p>

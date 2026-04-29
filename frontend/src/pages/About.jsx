@@ -10,7 +10,7 @@ export default function About() {
     <>
       <PageHero
         badge="About Us"
-        title="About DIT CyberClub"
+        title="About Cyber Club DIT"
         text="We build cybersecurity awareness, practical skills, ethical hacking knowledge, and student innovation at Dar es Salaam Institute of Technology."
       />
 
@@ -20,7 +20,7 @@ export default function About() {
             <span className="eyebrow">Who We Are</span>
             <h2>A student community focused on real cyber skills</h2>
             <p>
-              DIT CyberClub brings together students interested in cybersecurity, ethical hacking,
+              Cyber Club DIT brings together students interested in cybersecurity, ethical hacking,
               digital safety, networking, Linux, CTF competitions, and technology innovation.
             </p>
             <Button to="/leaders" variant="secondary">Meet The Leaders</Button>

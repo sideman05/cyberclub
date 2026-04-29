@@ -35,7 +35,7 @@ export default function Login() {
           <Shield size={32} />
         </div>
         <div className="admin-login-title">
-          <span>DIT CyberClub</span>
+          <span>Cyber Club DIT</span>
           <h1>Admin Login</h1>
         </div>
 
