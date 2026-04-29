@@ -1,0 +1,23 @@
+{
+  "framework": "vite",
+  "buildCommand": "cd frontend && npm install && npm run build",
+  "outputDirectory": "frontend/dist",
+  "rewrites": [
+    {
+      "source": "/api/uploads/:path*",
+      "destination": "http://38.247.148.233/api/uploads/:path*"
+    },
+    {
+      "source": "/api/index.php/:path*",
+      "destination": "http://38.247.148.233/api/index.php/:path*"
+    },
+    {
+      "source": "/api/:path*",
+      "destination": "http://38.247.148.233/api/index.php/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

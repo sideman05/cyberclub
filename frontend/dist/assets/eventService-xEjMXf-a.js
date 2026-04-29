@@ -1,0 +1,1 @@
+import{i as e,r as t}from"./api-CCBogmeL.js";var n={all(){return e(`/admin/events`)},find(t){return e(`/admin/events/${t}`)},create(e){return t(`/admin/events`,e)},update(e,n){return t(`/admin/events/${e}`,n,`PUT`)},remove(t){return e(`/admin/events/${t}`,{method:`DELETE`})}};export{n as t};

@@ -1,0 +1,1 @@
+var e=`http://38.247.148.233/api/index.php`,t=`/api/index.php`;function n(){return typeof window>`u`?e:window.location.protocol===`https:`?t:e}var r=n().replace(/\/$/,``),i=r.replace(/\/index\.php$/i,``);function a(e){return e?/^(data:|blob:|https?:\/\/)/i.test(e)?e:`${i}/${String(e).replace(/^\/+/,``)}`:``}export{a as n,r as t};

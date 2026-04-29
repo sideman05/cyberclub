@@ -1,1 +1,0 @@
-import{i as e,r as t}from"./api-D8BjtBvs.js";var n={all(){return e(`/admin/gallery`)},find(t){return e(`/admin/gallery/${t}`)},create(e){return t(`/admin/gallery`,e)},update(e,n){return t(`/admin/gallery/${e}`,n,`PUT`)},remove(t){return e(`/admin/gallery/${t}`,{method:`DELETE`})}};export{n as t};
