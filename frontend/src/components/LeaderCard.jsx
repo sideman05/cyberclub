@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { ExternalLink } from 'lucide-react';
+import { FaLinkedinIn, FaGithub } from 'react-icons/fa';
 
 function LeaderCard({ fullName, position, bio, image, imageAlt, linkedinUrl, githubUrl, onPreview, delay = 0 }) {
   return (
@@ -23,12 +23,12 @@ function LeaderCard({ fullName, position, bio, image, imageAlt, linkedinUrl, git
         <div className="leader-socials" aria-label={`${fullName} social links`}>
           {linkedinUrl && (
             <a href={linkedinUrl} target="_blank" rel="noreferrer" aria-label="LinkedIn">
-              <ExternalLink size={18} />
+              <FaLinkedinIn size={18} />
             </a>
           )}
           {githubUrl && (
             <a href={githubUrl} target="_blank" rel="noreferrer" aria-label="GitHub">
-              <ExternalLink size={18} />
+              <FaGithub size={18} />
             </a>
           )}
         </div>

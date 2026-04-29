@@ -1,1 +1,0 @@
-import{t as e}from"./react-vendor-CEFZOMne.js";var t=e();function n({message:e=`Something went wrong`,onRetry:n}){return(0,t.jsxs)(`div`,{className:`admin-state admin-error-state`,children:[(0,t.jsx)(`h3`,{children:e}),n&&(0,t.jsx)(`button`,{className:`admin-button admin-button-secondary`,type:`button`,onClick:n,children:`Retry`})]})}export{n as t};
