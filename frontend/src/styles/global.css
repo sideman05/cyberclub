@@ -6754,6 +6754,31 @@ body::after {
   }
 }
 
+@media (max-width: 920px) {
+  .site-shell {
+    padding-top: calc(70px + env(safe-area-inset-top));
+  }
+
+  .site-header {
+    position: fixed;
+    inset: 0 0 auto 0;
+    width: 100%;
+    z-index: 1000;
+  }
+
+  .site-header .nav-shell {
+    min-height: 70px;
+  }
+
+  .main-nav {
+    top: calc(70px + env(safe-area-inset-top));
+    z-index: 999;
+    max-height: calc(100dvh - 86px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
