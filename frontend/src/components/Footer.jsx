@@ -49,7 +49,7 @@ export default function Footer() {
       <div className="container footer-bottom">
         <span> &copy; 2026 Cyber Club DIT. All rights reserved.</span>
         <span>Secure. Learn. Build. Lead.</span>
-        <span>Dev. Elkana</span>
+        <span>Dev by </span>
       </div>
     </footer>
   );
