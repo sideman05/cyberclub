@@ -1,7 +1,75 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { CalendarDays, Clock3, MapPin, AlertCircle, CheckCircle } from 'lucide-react';
 import { publicApi } from '../services/publicApi.js';
+
+const EMPTY_FIELDS = [];
+
+function fieldKey(id) {
+  return id === null || id === undefined ? '' : String(id);
+}
+
+function isFieldRequired(field) {
+  return Number(field?.is_required) === 1;
+}
+
+function defaultValueForField(field) {
+  return field?.field_type === 'checkbox' ? [] : '';
+}
+
+function parseOptions(value) {
+  if (Array.isArray(value)) return value;
+
+  try {
+    const parsed = JSON.parse(value || '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function answerHasValue(answer) {
+  if (Array.isArray(answer)) {
+    return answer.some((item) => String(item ?? '').trim() !== '');
+  }
+
+  return String(answer ?? '').trim() !== '';
+}
+
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function answerMatchesCondition(answer, expectedValue) {
+  const expected = String(expectedValue ?? '').trim();
+  if (!expected) return false;
+
+  if (Array.isArray(answer)) {
+    return answer.map((item) => String(item)).includes(expected);
+  }
+
+  return String(answer ?? '').trim() === expected;
+}
+
+function isFieldVisible(field, answers, fieldsById, visited = new Set()) {
+  const parentId = fieldKey(field?.conditional_parent_field_id);
+  if (!parentId) return true;
+
+  const currentId = fieldKey(field?.id);
+  if (visited.has(currentId)) return false;
+
+  const parentField = fieldsById.get(parentId);
+  if (!parentField) return false;
+
+  const nextVisited = new Set(visited);
+  nextVisited.add(currentId);
+
+  if (!isFieldVisible(parentField, answers, fieldsById, nextVisited)) {
+    return false;
+  }
+
+  return answerMatchesCondition(answers[parentId], field.conditional_parent_value);
+}
 
 export default function EventJoin() {
   const { id } = useParams();
@@ -18,6 +86,15 @@ export default function EventJoin() {
     responder_name: '',
     responder_email: '',
   });
+  const eventFields = form?.fields || EMPTY_FIELDS;
+  const fieldsById = useMemo(
+    () => new Map(eventFields.map((field) => [fieldKey(field.id), field])),
+    [eventFields]
+  );
+  const visibleFields = useMemo(
+    () => eventFields.filter((field) => isFieldVisible(field, formAnswers, fieldsById)),
+    [eventFields, fieldsById, formAnswers]
+  );
 
   useEffect(() => {
     let active = true;
@@ -39,7 +116,7 @@ export default function EventJoin() {
             // Initialize form answers
             const answers = {};
             formData.fields?.forEach((field) => {
-              answers[field.id] = '';
+              answers[fieldKey(field.id)] = defaultValueForField(field);
             });
             setFormAnswers(answers);
           }
@@ -87,7 +164,12 @@ export default function EventJoin() {
       return;
     }
 
-    if (form && form.fields && form.fields.length > 0) {
+    if (!isValidEmail(basicData.responder_email.trim())) {
+      setError('Enter a valid email address');
+      return;
+    }
+
+    if (form && visibleFields.length > 0) {
       setJoinStep(2);
       return;
     }
@@ -102,24 +184,32 @@ export default function EventJoin() {
 
   function handleFormFieldChange(fieldId, value, fieldType) {
     setFormAnswers((prev) => {
+      const key = fieldKey(fieldId);
+
       if (fieldType === 'checkbox') {
-        const current = prev[fieldId] || [];
-        if (Array.isArray(current)) {
-          if (current.includes(value)) {
-            return { ...prev, [fieldId]: current.filter((v) => v !== value) };
-          } else {
-            return { ...prev, [fieldId]: [...current, value] };
-          }
+        const current = Array.isArray(prev[key]) ? prev[key] : [];
+        if (current.includes(value)) {
+          return { ...prev, [key]: current.filter((v) => v !== value) };
         }
-        return { ...prev, [fieldId]: [value] };
-      } else {
-        return { ...prev, [fieldId]: value };
+        return { ...prev, [key]: [...current, value] };
       }
+
+      return { ...prev, [key]: value };
     });
   }
 
-  async function handleSubmit(e) {
-    if (e?.preventDefault) e.preventDefault();
+  function handleFormSubmit(e) {
+    e.preventDefault();
+
+    if (joinStep === 1) {
+      handleNextStep();
+      return;
+    }
+
+    handleSubmit();
+  }
+
+  async function handleSubmit() {
     setSubmitting(true);
     setError('');
 
@@ -127,10 +217,10 @@ export default function EventJoin() {
       if (form) {
         // Validate required fields
         const errors = [];
-        form.fields?.forEach((field) => {
-          if (field.is_required) {
-            const answer = formAnswers[field.id];
-            if (!answer || answer === '' || (Array.isArray(answer) && answer.length === 0)) {
+        visibleFields.forEach((field) => {
+          if (isFieldRequired(field)) {
+            const answer = formAnswers[fieldKey(field.id)];
+            if (!answerHasValue(answer)) {
               errors.push(`${field.label} is required`);
             }
           }
@@ -142,11 +232,20 @@ export default function EventJoin() {
           return;
         }
 
+        const answers = {};
+        visibleFields.forEach((field) => {
+          const key = fieldKey(field.id);
+          const answer = formAnswers[key];
+          if (answerHasValue(answer)) {
+            answers[key] = answer;
+          }
+        });
+
         // Submit form
         await publicApi.submitEventForm(form.id, event.databaseId, {
           responder_name: basicData.responder_name,
           responder_email: basicData.responder_email,
-          answers: formAnswers,
+          answers,
         });
       }
 
@@ -241,7 +340,7 @@ export default function EventJoin() {
                 </div>
               </div>
             ) : (
-              <form className="event-join-grid" onSubmit={handleSubmit}>
+              <form className="event-join-grid" onSubmit={handleFormSubmit}>
                 {error && (
                   <div className="event-join-error" style={{ gridColumn: '1 / -1', color: '#ef4444', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                     <AlertCircle size={18} /> {error}
@@ -289,11 +388,11 @@ export default function EventJoin() {
                       <h3>{form.title} Questions</h3>
                       <p>Answer the questions below to complete your registration.</p>
                     </div>
-                    {form && form.fields && form.fields.map((field) => (
+                    {visibleFields.map((field) => (
                       <FormField
                         key={field.id}
                         field={field}
-                        value={formAnswers[field.id] || ''}
+                        value={formAnswers[fieldKey(field.id)] ?? defaultValueForField(field)}
                         onChange={(val) => handleFormFieldChange(field.id, val, field.field_type)}
                       />
                     ))}
@@ -317,11 +416,12 @@ export default function EventJoin() {
 }
 
 function FormField({ field, value, onChange }) {
+  const required = isFieldRequired(field);
   const commonProps = {
     className: 'form-control',
   };
 
-  if (field.is_required) {
+  if (required) {
     commonProps.required = true;
   }
 
@@ -331,7 +431,7 @@ function FormField({ field, value, onChange }) {
         <label className="event-join-field event-join-field-card event-join-field-full">
           <span className="event-join-field-label">
             {field.label}
-            {field.is_required && <span className="required-indicator">*</span>}
+            {required && <span className="required-indicator">*</span>}
           </span>
           {field.help_text && <small className="event-join-help">{field.help_text}</small>}
           <textarea
@@ -349,7 +449,7 @@ function FormField({ field, value, onChange }) {
         <label className="event-join-field event-join-field-card">
           <span className="event-join-field-label">
             {field.label}
-            {field.is_required && <span className="required-indicator">*</span>}
+            {required && <span className="required-indicator">*</span>}
           </span>
           {field.help_text && <small className="event-join-help">{field.help_text}</small>}
           <input
@@ -367,7 +467,7 @@ function FormField({ field, value, onChange }) {
         <label className="event-join-field event-join-field-card">
           <span className="event-join-field-label">
             {field.label}
-            {field.is_required && <span className="required-indicator">*</span>}
+            {required && <span className="required-indicator">*</span>}
           </span>
           {field.help_text && <small className="event-join-help">{field.help_text}</small>}
           <input
@@ -385,7 +485,7 @@ function FormField({ field, value, onChange }) {
         <label className="event-join-field event-join-field-card">
           <span className="event-join-field-label">
             {field.label}
-            {field.is_required && <span className="required-indicator">*</span>}
+            {required && <span className="required-indicator">*</span>}
           </span>
           {field.help_text && <small className="event-join-help">{field.help_text}</small>}
           <input
@@ -403,7 +503,7 @@ function FormField({ field, value, onChange }) {
         <label className="event-join-field event-join-field-card">
           <span className="event-join-field-label">
             {field.label}
-            {field.is_required && <span className="required-indicator">*</span>}
+            {required && <span className="required-indicator">*</span>}
           </span>
           {field.help_text && <small className="event-join-help">{field.help_text}</small>}
           <input
@@ -421,7 +521,7 @@ function FormField({ field, value, onChange }) {
         <label className="event-join-field event-join-field-card">
           <span className="event-join-field-label">
             {field.label}
-            {field.is_required && <span className="required-indicator">*</span>}
+            {required && <span className="required-indicator">*</span>}
           </span>
           {field.help_text && <small className="event-join-help">{field.help_text}</small>}
           <input
@@ -438,7 +538,7 @@ function FormField({ field, value, onChange }) {
         <label className="event-join-field event-join-field-card">
           <span className="event-join-field-label">
             {field.label}
-            {field.is_required && <span className="required-indicator">*</span>}
+            {required && <span className="required-indicator">*</span>}
           </span>
           {field.help_text && <small className="event-join-help">{field.help_text}</small>}
           <input
@@ -451,12 +551,12 @@ function FormField({ field, value, onChange }) {
       );
 
     case 'select': {
-      const options = JSON.parse(field.options || '[]');
+      const options = parseOptions(field.options);
       return (
         <label className="event-join-field event-join-field-card event-join-field-full">
           <span className="event-join-field-label">
             {field.label}
-            {field.is_required && <span className="required-indicator">*</span>}
+            {required && <span className="required-indicator">*</span>}
           </span>
           {field.help_text && <small className="event-join-help">{field.help_text}</small>}
           <select {...commonProps} value={value} onChange={(e) => onChange(e.target.value)}>
@@ -472,13 +572,13 @@ function FormField({ field, value, onChange }) {
     }
 
     case 'radio': {
-      const options = JSON.parse(field.options || '[]');
+      const options = parseOptions(field.options);
       return (
         <fieldset className="event-join-field event-join-field-card event-join-field-full radio-group">
           <legend>
             <span className="event-join-field-label">
               {field.label}
-              {field.is_required && <span className="required-indicator">*</span>}
+              {required && <span className="required-indicator">*</span>}
             </span>
             {field.help_text && <small className="event-join-help">{field.help_text}</small>}
           </legend>
@@ -501,14 +601,14 @@ function FormField({ field, value, onChange }) {
     }
 
     case 'checkbox': {
-      const options = JSON.parse(field.options || '[]');
+      const options = parseOptions(field.options);
       const selectedValues = Array.isArray(value) ? value : [];
       return (
         <fieldset className="event-join-field event-join-field-card event-join-field-full checkbox-group">
           <legend>
             <span className="event-join-field-label">
               {field.label}
-              {field.is_required && <span className="required-indicator">*</span>}
+              {required && <span className="required-indicator">*</span>}
             </span>
             {field.help_text && <small className="event-join-help">{field.help_text}</small>}
           </legend>
@@ -536,7 +636,7 @@ function FormField({ field, value, onChange }) {
         <label className="event-join-field event-join-field-card">
           <span className="event-join-field-label">
             {field.label}
-            {field.is_required && <span className="required-indicator">*</span>}
+            {required && <span className="required-indicator">*</span>}
           </span>
           {field.help_text && <small className="event-join-help">{field.help_text}</small>}
           <input

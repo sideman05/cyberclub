@@ -10,6 +10,7 @@ import {
   FileText,
   ListChecks,
   Save,
+  Link2,
 } from 'lucide-react';
 import FormInput from '../components/FormInput';
 import Textarea from '../components/Textarea';
@@ -18,6 +19,29 @@ import LoadingState from '../components/LoadingState';
 import ErrorState from '../components/ErrorState';
 import { eventService } from '../services/eventService.js';
 import { eventFormService } from '../services/eventFormService.js';
+
+function hasOwn(object, key) {
+  return Object.prototype.hasOwnProperty.call(object, key);
+}
+
+function fieldKey(id) {
+  return id === null || id === undefined ? '' : String(id);
+}
+
+function isFieldRequired(field) {
+  return Number(field?.is_required) === 1;
+}
+
+function parseOptions(value) {
+  if (Array.isArray(value)) return value;
+
+  try {
+    const parsed = JSON.parse(value || '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
 
 export default function EventFormBuilder() {
   const { eventId, formId } = useParams();
@@ -114,12 +138,18 @@ export default function EventFormBuilder() {
     try {
       const field = fields[index];
       const updated = await eventFormService.updateField(formId, field.id, {
-        field_type: updates.field_type || field.field_type,
-        label: updates.label || field.label,
-        placeholder: updates.placeholder || field.placeholder,
-        options: updates.options || JSON.parse(field.options || '[]'),
-        is_required: updates.is_required !== undefined ? updates.is_required : field.is_required,
-        help_text: updates.help_text || field.help_text,
+        field_type: hasOwn(updates, 'field_type') ? updates.field_type : field.field_type,
+        label: hasOwn(updates, 'label') ? updates.label : field.label,
+        placeholder: hasOwn(updates, 'placeholder') ? updates.placeholder : field.placeholder,
+        options: hasOwn(updates, 'options') ? updates.options : parseOptions(field.options),
+        is_required: hasOwn(updates, 'is_required') ? updates.is_required : field.is_required,
+        help_text: hasOwn(updates, 'help_text') ? updates.help_text : field.help_text,
+        conditional_parent_field_id: hasOwn(updates, 'conditional_parent_field_id')
+          ? updates.conditional_parent_field_id
+          : field.conditional_parent_field_id,
+        conditional_parent_value: hasOwn(updates, 'conditional_parent_value')
+          ? updates.conditional_parent_value
+          : field.conditional_parent_value,
       });
       const newFields = [...fields];
       newFields[index] = updated;
@@ -287,6 +317,7 @@ export default function EventFormBuilder() {
                   key={field.id}
                   field={field}
                   index={index}
+                  allFields={fields}
                   onUpdate={(updates) => handleUpdateField(index, updates)}
                   onDelete={() => handleDeleteField(index)}
                   onDragStart={() => handleDragStart(index)}
@@ -318,6 +349,7 @@ export default function EventFormBuilder() {
 function FormFieldEditor({
   field,
   index,
+  allFields,
   onUpdate,
   onDelete,
   onDragStart,
@@ -328,15 +360,11 @@ function FormFieldEditor({
   const [label, setLabel] = useState(field.label);
   const [fieldType, setFieldType] = useState(field.field_type);
   const [placeholder, setPlaceholder] = useState(field.placeholder || '');
-  const [isRequired, setIsRequired] = useState(Boolean(field.is_required));
+  const [isRequired, setIsRequired] = useState(isFieldRequired(field));
   const [helpText, setHelpText] = useState(field.help_text || '');
-  const [options, setOptions] = useState(() => {
-    try {
-      return JSON.parse(field.options || '[]');
-    } catch {
-      return [];
-    }
-  });
+  const [conditionalParentId, setConditionalParentId] = useState(fieldKey(field.conditional_parent_field_id));
+  const [conditionalParentValue, setConditionalParentValue] = useState(field.conditional_parent_value || '');
+  const [options, setOptions] = useState(() => parseOptions(field.options));
   const [optionInput, setOptionInput] = useState('');
 
   const fieldTypes = [
@@ -378,6 +406,31 @@ function FormFieldEditor({
     onUpdate({ help_text: e.target.value });
   }
 
+  function handleConditionalParentChange(e) {
+    const parentId = e.target.value;
+    setConditionalParentId(parentId);
+    setConditionalParentValue('');
+    // Only save if clearing the condition
+    if (!parentId) {
+      onUpdate({
+        conditional_parent_field_id: null,
+        conditional_parent_value: '',
+      });
+    }
+    // If setting a parent, wait for user to also select a value
+  }
+
+  function handleConditionalValueChange(e) {
+    const value = e.target.value;
+    setConditionalParentValue(value);
+    // Only save both fields together when value is selected
+    if (conditionalParentId && value) {
+      onUpdate({
+        conditional_parent_field_id: Number(conditionalParentId),
+        conditional_parent_value: value,
+      });
+    }
+  }
   function handleAddOption() {
     if (optionInput.trim()) {
       const newOptions = [...options, optionInput.trim()];
@@ -392,6 +445,10 @@ function FormFieldEditor({
     setOptions(newOptions);
     onUpdate({ options: newOptions });
   }
+
+  // Find parent field to show available options
+  const parentField = conditionalParentId ? allFields.find((f) => fieldKey(f.id) === conditionalParentId) : null;
+  const parentOptions = parentField ? parseOptions(parentField.options) : [];
 
   const showOptions = ['select', 'radio', 'checkbox'].includes(fieldType);
   const showPlaceholder = ['text', 'email', 'number', 'tel', 'url', 'textarea'].includes(fieldType);
@@ -496,6 +553,50 @@ function FormFieldEditor({
               )}
             </div>
           )}
+
+          <fieldset style={{ border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', padding: '12px', marginTop: '16px' }}>
+            <legend style={{ fontSize: '12px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px', paddingInline: '6px' }}>
+              <Link2 size={14} style={{ display: 'inline-block', marginRight: '6px', verticalAlign: 'middle' }} />
+              Conditional Logic
+            </legend>
+            <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', marginBlock: '8px' }}>
+              Show this question only when user selects a specific option in another question.
+            </p>
+            <Select
+              label="Parent Question (optional)"
+              value={conditionalParentId || ''}
+              onChange={handleConditionalParentChange}
+            >
+              <option value="">-- No condition --</option>
+              {allFields.map((f) => {
+                const isSelectLike = ['radio', 'select', 'checkbox'].includes(f.field_type);
+                const isNotSelf = fieldKey(f.id) !== fieldKey(field.id);
+                if (isSelectLike && isNotSelf) {
+                  return (
+                    <option key={f.id} value={fieldKey(f.id)}>
+                      {f.label}
+                    </option>
+                  );
+                }
+                return null;
+              })}
+            </Select>
+
+            {conditionalParentId && parentOptions.length > 0 && (
+              <Select
+                label="Show when option is selected"
+                value={conditionalParentValue || ''}
+                onChange={handleConditionalValueChange}
+              >
+                <option value="">-- Select option --</option>
+                {parentOptions.map((opt, idx) => (
+                  <option key={idx} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+              </Select>
+            )}
+          </fieldset>
         </div>
       )}
     </div>

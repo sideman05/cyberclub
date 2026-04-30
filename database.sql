@@ -115,10 +115,15 @@ CREATE TABLE IF NOT EXISTS event_form_fields (
   is_required TINYINT(1) NOT NULL DEFAULT 0,
   order_index INT NOT NULL DEFAULT 0,
   help_text VARCHAR(500) NULL,
+  conditional_parent_field_id INT UNSIGNED NULL,
+  conditional_parent_value VARCHAR(255) NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (form_id) REFERENCES event_forms(id) ON DELETE CASCADE,
+  CONSTRAINT fk_event_form_fields_conditional_parent
+    FOREIGN KEY (conditional_parent_field_id) REFERENCES event_form_fields(id) ON DELETE SET NULL,
   INDEX idx_form_fields_form_id (form_id),
-  INDEX idx_form_fields_order (order_index)
+  INDEX idx_form_fields_order (order_index),
+  INDEX idx_conditional_parent (conditional_parent_field_id)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS event_form_responses (

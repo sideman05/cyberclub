@@ -1,1 +1,0 @@
-import{t as e}from"./react-vendor-CO5RxLDL.js";var t=e();function n({title:e=`No records yet`,action:n=null}){return(0,t.jsxs)(`div`,{className:`admin-state admin-empty`,children:[(0,t.jsx)(`h3`,{children:e}),n]})}export{n as t};

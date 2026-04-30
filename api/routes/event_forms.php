@@ -70,6 +70,145 @@ function response_details_by_id(PDO $pdo, int $response_id): ?array
     return $response ?: null;
 }
 
+function event_form_int_or_null(mixed $value): ?int
+{
+    if ($value === null || $value === '') {
+        return null;
+    }
+
+    $id = filter_var($value, FILTER_VALIDATE_INT);
+    return $id !== false && (int) $id > 0 ? (int) $id : null;
+}
+
+function event_form_answer_value(array $answers, int $fieldId): mixed
+{
+    if (array_key_exists($fieldId, $answers)) {
+        return $answers[$fieldId];
+    }
+
+    $key = (string) $fieldId;
+    return array_key_exists($key, $answers) ? $answers[$key] : null;
+}
+
+function event_form_answer_has_value(mixed $answer): bool
+{
+    if (is_array($answer)) {
+        foreach ($answer as $item) {
+            if (trim((string) $item) !== '') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    return trim((string) ($answer ?? '')) !== '';
+}
+
+function event_form_answer_matches_condition(mixed $answer, string $expected): bool
+{
+    $expected = trim($expected);
+    if ($expected === '') {
+        return false;
+    }
+
+    if (is_array($answer)) {
+        foreach ($answer as $item) {
+            if ((string) $item === $expected) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    return trim((string) ($answer ?? '')) === $expected;
+}
+
+function event_form_field_is_visible(array $field, array $answers, array $fieldsById, array $visited = []): bool
+{
+    $parentId = event_form_int_or_null($field['conditional_parent_field_id'] ?? null);
+    if ($parentId === null) {
+        return true;
+    }
+
+    $fieldId = (int) $field['id'];
+    if (isset($visited[$fieldId])) {
+        return false;
+    }
+
+    if (!isset($fieldsById[$parentId])) {
+        return false;
+    }
+
+    $visited[$fieldId] = true;
+    $parentField = $fieldsById[$parentId];
+
+    if (!event_form_field_is_visible($parentField, $answers, $fieldsById, $visited)) {
+        return false;
+    }
+
+    return event_form_answer_matches_condition(
+        event_form_answer_value($answers, $parentId),
+        clean_string($field['conditional_parent_value'] ?? '')
+    );
+}
+
+function event_form_format_answer(mixed $answer): string
+{
+    if (is_array($answer)) {
+        $values = [];
+        foreach ($answer as $item) {
+            $value = clean_string($item);
+            if ($value !== '') {
+                $values[] = $value;
+            }
+        }
+
+        return implode(', ', $values);
+    }
+
+    return clean_string($answer);
+}
+
+function event_form_validate_condition(PDO $pdo, int $formId, ?int $parentFieldId, string $parentValue, ?int $fieldId = null): array
+{
+    if ($parentFieldId === null) {
+        return [];
+    }
+
+    $errors = [];
+
+    if ($parentValue === '') {
+        $errors['conditional_parent_value'] = 'Choose the parent option that should show this field.';
+    }
+
+    $sql = "SELECT id FROM event_form_fields
+            WHERE id = :parent_id
+              AND form_id = :form_id
+              AND field_type IN ('radio', 'checkbox', 'select')";
+
+    if ($fieldId !== null) {
+        $sql .= ' AND id <> :field_id';
+    }
+
+    $stmt = $pdo->prepare($sql . ' LIMIT 1');
+    $stmt->bindValue(':parent_id', $parentFieldId, PDO::PARAM_INT);
+    $stmt->bindValue(':form_id', $formId, PDO::PARAM_INT);
+
+    if ($fieldId !== null) {
+        $stmt->bindValue(':field_id', $fieldId, PDO::PARAM_INT);
+    }
+
+    $stmt->execute();
+
+    if (!$stmt->fetch()) {
+        $errors['conditional_parent_field_id'] = 'Choose a valid parent option field from this form.';
+    }
+
+    return $errors;
+}
+
 function event_form_payload(PDO $pdo, array $input): array
 {
     $title = clean_string($input['title'] ?? '');
@@ -121,7 +260,7 @@ function handle_event_form_routes(PDO $pdo, string $method, array $segments): bo
         $input = request_input();
         $formId = filter_var($input['form_id'] ?? '', FILTER_VALIDATE_INT);
         $eventId = filter_var($input['event_id'] ?? '', FILTER_VALIDATE_INT);
-        $responderEmail = clean_string($input['responder_email'] ?? '');
+        $responderEmail = strtolower(clean_string($input['responder_email'] ?? ''));
         $responderName = clean_string($input['responder_name'] ?? '');
         $answers = $input['answers'] ?? [];
 
@@ -129,8 +268,16 @@ function handle_event_form_routes(PDO $pdo, string $method, array $segments): bo
             'form_id' => $formId,
             'event_id' => $eventId,
             'responder_email' => $responderEmail,
-            'answers' => !empty($answers),
         ], ['form_id', 'event_id', 'responder_email']);
+
+        if ($responderEmail !== '' && ($emailError = validate_email_field($responderEmail)) !== null) {
+            $errors['responder_email'] = $emailError;
+        }
+
+        if (!is_array($answers)) {
+            $errors['answers'] = 'Answers must be submitted as an object.';
+            $answers = [];
+        }
 
         if ($errors !== []) {
             json_error('Please provide all required fields', $errors, 422);
@@ -140,6 +287,27 @@ function handle_event_form_routes(PDO $pdo, string $method, array $segments): bo
         $form = event_form_by_id($pdo, $formId);
         if (!$form || (int)$form['event_id'] !== $eventId) {
             json_error('Invalid form or event', [], 422);
+        }
+
+        $fields = form_fields_by_form_id($pdo, $formId);
+        $fieldsById = [];
+        foreach ($fields as $field) {
+            $fieldsById[(int) $field['id']] = $field;
+        }
+
+        $answerErrors = [];
+        foreach ($fields as $field) {
+            if (!event_form_field_is_visible($field, $answers, $fieldsById)) {
+                continue;
+            }
+
+            if ((int) $field['is_required'] === 1 && !event_form_answer_has_value(event_form_answer_value($answers, (int) $field['id']))) {
+                $answerErrors['field_' . $field['id']] = $field['label'] . ' is required.';
+            }
+        }
+
+        if ($answerErrors !== []) {
+            json_error('Please complete the required form fields', $answerErrors, 422);
         }
 
         $ipAddress = $_SERVER['REMOTE_ADDR'] ?? null;
@@ -160,33 +328,27 @@ function handle_event_form_routes(PDO $pdo, string $method, array $segments): bo
         $responseId = (int)$pdo->lastInsertId();
 
         // Insert response data
-        $fieldStmt = $pdo->prepare(
+        $answerStmt = $pdo->prepare(
             'INSERT INTO event_form_response_data (response_id, field_id, field_label, answer)
              VALUES (:response_id, :field_id, :field_label, :answer)'
         );
 
-        foreach ($answers as $fieldId => $answer) {
-            $fieldId = filter_var($fieldId, FILTER_VALIDATE_INT);
-            if ($fieldId) {
-                $fieldStmt = $pdo->prepare(
-                    'SELECT id, label FROM event_form_fields WHERE id = :id AND form_id = :form_id LIMIT 1'
-                );
-                $fieldStmt->execute([':id' => $fieldId, ':form_id' => $formId]);
-                $field = $fieldStmt->fetch();
-
-                if ($field) {
-                    $insertStmt = $pdo->prepare(
-                        'INSERT INTO event_form_response_data (response_id, field_id, field_label, answer)
-                         VALUES (:response_id, :field_id, :field_label, :answer)'
-                    );
-                    $insertStmt->execute([
-                        ':response_id' => $responseId,
-                        ':field_id' => $fieldId,
-                        ':field_label' => $field['label'],
-                        ':answer' => is_array($answer) ? implode(', ', $answer) : (string)$answer,
-                    ]);
-                }
+        foreach ($fields as $field) {
+            if (!event_form_field_is_visible($field, $answers, $fieldsById)) {
+                continue;
             }
+
+            $answer = event_form_answer_value($answers, (int) $field['id']);
+            if (!event_form_answer_has_value($answer)) {
+                continue;
+            }
+
+            $answerStmt->execute([
+                ':response_id' => $responseId,
+                ':field_id' => (int) $field['id'],
+                ':field_label' => $field['label'],
+                ':answer' => event_form_format_answer($answer),
+            ]);
         }
 
         json_success('Response submitted successfully', ['response_id' => $responseId], 201);
@@ -337,6 +499,14 @@ function handle_event_form_routes(PDO $pdo, string $method, array $segments): bo
                 $options = $input['options'] ?? [];
                 $isRequired = isset($input['is_required']) ? (int)(bool)$input['is_required'] : 0;
                 $helpText = clean_string($input['help_text'] ?? '');
+                $conditionalParentFieldId = array_key_exists('conditional_parent_field_id', $input)
+                    ? event_form_int_or_null($input['conditional_parent_field_id'])
+                    : null;
+                $conditionalParentValue = clean_string($input['conditional_parent_value'] ?? '');
+
+                if ($conditionalParentFieldId === null) {
+                    $conditionalParentValue = '';
+                }
 
                 $errors = validate_required([
                     'field_type' => $fieldType,
@@ -348,6 +518,11 @@ function handle_event_form_routes(PDO $pdo, string $method, array $segments): bo
                     $errors['field_type'] = 'Invalid field type.';
                 }
 
+                $errors = array_merge(
+                    $errors,
+                    event_form_validate_condition($pdo, $id, $conditionalParentFieldId, $conditionalParentValue)
+                );
+
                 if ($errors !== []) {
                     json_error('Please fix the highlighted fields', $errors, 422);
                 }
@@ -357,8 +532,8 @@ function handle_event_form_routes(PDO $pdo, string $method, array $segments): bo
                 $optionsJson = !empty($options) ? json_encode($options) : null;
 
                 $stmt = $pdo->prepare(
-                    'INSERT INTO event_form_fields (form_id, field_type, label, placeholder, options, is_required, order_index, help_text)
-                     VALUES (:form_id, :field_type, :label, :placeholder, :options, :is_required, :order_index, :help_text)'
+                    'INSERT INTO event_form_fields (form_id, field_type, label, placeholder, options, is_required, order_index, help_text, conditional_parent_field_id, conditional_parent_value)
+                     VALUES (:form_id, :field_type, :label, :placeholder, :options, :is_required, :order_index, :help_text, :conditional_parent_field_id, :conditional_parent_value)'
                 );
                 $stmt->execute([
                     ':form_id' => $id,
@@ -369,6 +544,8 @@ function handle_event_form_routes(PDO $pdo, string $method, array $segments): bo
                     ':is_required' => $isRequired,
                     ':order_index' => $orderIndex + 1,
                     ':help_text' => $helpText,
+                    ':conditional_parent_field_id' => $conditionalParentFieldId,
+                    ':conditional_parent_value' => $conditionalParentValue,
                 ]);
 
                 $fieldId = (int)$pdo->lastInsertId();
@@ -421,12 +598,41 @@ function handle_event_form_routes(PDO $pdo, string $method, array $segments): bo
                 $options = $input['options'] ?? [];
                 $isRequired = isset($input['is_required']) ? (int)(bool)$input['is_required'] : $field['is_required'];
                 $helpText = clean_string($input['help_text'] ?? $field['help_text']);
+                $conditionalParentFieldId = array_key_exists('conditional_parent_field_id', $input)
+                    ? event_form_int_or_null($input['conditional_parent_field_id'])
+                    : event_form_int_or_null($field['conditional_parent_field_id'] ?? null);
+                $conditionalParentValue = array_key_exists('conditional_parent_value', $input)
+                    ? clean_string($input['conditional_parent_value'])
+                    : clean_string($field['conditional_parent_value'] ?? '');
+
+                if ($conditionalParentFieldId === null) {
+                    $conditionalParentValue = '';
+                }
+
+                $errors = validate_required([
+                    'field_type' => $fieldType,
+                    'label' => $label,
+                ], ['field_type', 'label']);
+
+                $validTypes = ['text', 'email', 'number', 'textarea', 'radio', 'checkbox', 'select', 'date', 'time', 'tel', 'url'];
+                if (!in_array($fieldType, $validTypes, true)) {
+                    $errors['field_type'] = 'Invalid field type.';
+                }
+
+                $errors = array_merge(
+                    $errors,
+                    event_form_validate_condition($pdo, $id, $conditionalParentFieldId, $conditionalParentValue, $fieldId)
+                );
+
+                if ($errors !== []) {
+                    json_error('Please fix the highlighted fields', $errors, 422);
+                }
 
                 $optionsJson = !empty($options) ? json_encode($options) : null;
 
                 $stmt = $pdo->prepare(
                     'UPDATE event_form_fields 
-                     SET field_type = :field_type, label = :label, placeholder = :placeholder, options = :options, is_required = :is_required, help_text = :help_text
+                     SET field_type = :field_type, label = :label, placeholder = :placeholder, options = :options, is_required = :is_required, help_text = :help_text, conditional_parent_field_id = :conditional_parent_field_id, conditional_parent_value = :conditional_parent_value
                      WHERE id = :id'
                 );
                 $stmt->execute([
@@ -436,6 +642,8 @@ function handle_event_form_routes(PDO $pdo, string $method, array $segments): bo
                     ':options' => $optionsJson,
                     ':is_required' => $isRequired,
                     ':help_text' => $helpText,
+                    ':conditional_parent_field_id' => $conditionalParentFieldId,
+                    ':conditional_parent_value' => $conditionalParentValue,
                     ':id' => $fieldId,
                 ]);
 
