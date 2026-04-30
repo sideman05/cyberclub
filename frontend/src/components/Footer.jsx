@@ -47,8 +47,9 @@ export default function Footer() {
         </div>
       </div>
       <div className="container footer-bottom">
-        <span>(c) 2026 Cyber Club DIT. All rights reserved.</span>
+        <span> &copy; 2026 Cyber Club DIT. All rights reserved.</span>
         <span>Secure. Learn. Build. Lead.</span>
+        <span>Dev. Elkana</span>
       </div>
     </footer>
   );
