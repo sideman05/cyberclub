@@ -2186,6 +2186,11 @@ p {
   width: fit-content;
 }
 
+.contact-form .contact-form-submit,
+.contact-form .contact-form-submit span {
+  color: #000000;
+}
+
 .site-footer {
   position: relative;
   padding: 4.4rem 0 1.4rem;

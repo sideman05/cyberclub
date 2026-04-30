@@ -55,7 +55,7 @@ export default function ContactForm() {
         <span>Message</span>
         <textarea name="message" placeholder="Write your message here" value={form.message} onChange={handleChange} required />
       </label>
-      <button className="button button-primary" type="submit" disabled={busy}>
+      <button className="button button-primary contact-form-submit" type="submit" disabled={busy}>
         <span>{busy ? 'Sending...' : 'Send Message'}</span>
       </button>
     </form>
